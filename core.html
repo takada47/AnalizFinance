@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учет Финансов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Светлый фон по умолчанию */
+            transition: background-color 0.3s ease;
+        }
+        /* Стили для кастомного скроллбара */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        /* Стили для темного режима */
+        body.dark {
+            background-color: #1a202c; /* Темный фон */
+            color: #e2e8f0; /* Светлый текст */
+        }
+        body.dark .bg-white {
+            background-color: #2d3748; /* Темные карточки */
+            color: #e2e8f0;
+        }
+        body.dark .text-gray-800 {
+            color: #e2e8f0;
+        }
+        body.dark .text-gray-500, body.dark .text-gray-600, body.dark .text-gray-700 {
+            color: #cbd5e0;
+        }
+        body.dark .border-gray-300 {
+            border-color: #4a5568;
+        }
+        body.dark input, body.dark select {
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+        body.dark .bg-gray-50 {
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+        body.dark .text-gray-700 {
+            color: #e2e8f0;
+        }
+        body.dark .border-b {
+            border-color: #4a5568;
+        }
+        body.dark .bg-gray-200 {
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+        body.dark .text-gray-900 {
+            color: #e2e8f0;
+        }
+        body.dark .border-gray-700 {
+            border-color: #a0aec0;
+        }
+        body.dark .text-gray-400 {
+            color: #a0aec0;
+        }
+
+        /* Стили для фоновых изображений */
+        body.bg-image-1 { background-image: url('https://placehold.co/1920x1080/F0F8FF/333333?text=Light+Blue+Background'); background-size: cover; background-attachment: fixed; }
+        body.bg-image-2 { background-image: url('https://placehold.co/1920x1080/E0FFFF/333333?text=Cyan+Background'); background-size: cover; background-attachment: fixed; }
+        body.bg-image-3 { background-image: url('https://placehold.co/1920x1080/F5F5DC/333333?text=Beige+Background'); background-size: cover; background-attachment: fixed; }
+        body.bg-image-4 { background-image: url('https://placehold.co/1920x1080/D3D3D3/333333?text=Light+Gray+Background'); background-size: cover; background-attachment: fixed; }
+
+        /* Стили для кнопок калькулятора */
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calculator-grid button {
+            padding: 12px;
+            font-size: 1.25rem;
+            border-radius: 8px;
+            background-color: #e2e8f0;
+            color: #2d3748;
+            transition: background-color 0.2s ease;
+        }
+        .calculator-grid button:hover {
+            background-color: #cbd5e0;
+        }
+        .calculator-grid button.operator {
+            background-color: #4299e1;
+            color: white;
+        }
+        .calculator-grid button.operator:hover {
+            background-color: #3182ce;
+        }
+        .calculator-grid button.equals {
+            background-color: #38a169;
+            color: white;
+            grid-column: span 2;
+        }
+        .calculator-grid button.equals:hover {
+            background-color: #2f855a;
+        }
+        .calculator-grid button.clear {
+            background-color: #e53e3e;
+            color: white;
+        }
+        .calculator-grid button.clear:hover {
+            background-color: #c53030;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 lg:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Заголовок и ID пользователя -->
+        <div class="mb-6 p-4 bg-white rounded-lg shadow-lg flex justify-between items-center">
+             <div>
+                <h1 class="text-3xl font-bold text-gray-800">Финансовый трекер</h1>
+                <p class="text-sm text-gray-500 mt-1">Ваш ID для совместной работы: <span id="userId" class="font-mono bg-gray-200 px-2 py-1 rounded"></span></p>
+             </div>
+             <!-- Переключатель темного режима -->
+             <div class="flex items-center space-x-2">
+                <span class="text-gray-700">Светлый</span>
+                <label for="darkModeToggle" class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+                <span class="text-gray-700">Темный</span>
+             </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Левая колонка: Доходы и Расходы -->
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Блок доходов -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Доходы</h2>
+                    <form id="income-form" class="space-y-4">
+                        <div>
+                            <label for="income-type" class="block text-sm font-medium text-gray-600">Тип дохода</label>
+                            <select id="income-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                                <option value="daily">Ежедневный доход (Чаевые)</option>
+                                <option value="advance">Аванс</option>
+                                <option value="salary">Зарплата</option>
+                                <option value="other_income">Другой доход</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="income-date" class="block text-sm font-medium text-gray-600">Дата</label>
+                            <input type="date" id="income-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                        </div>
+                        <div>
+                            <label for="income-amount" class="block text-sm font-medium text-gray-600">Сумма</label>
+                            <input type="number" id="income-amount" placeholder="Напр. 1350" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">Добавить доход</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-gray-600">Записи доходов:</h3>
+                        <div id="income-entries-container" class="table-container mt-2 border rounded-md">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">Дата</th>
+                                        <th scope="col" class="px-6 py-3">Тип</th>
+                                        <th scope="col" class="px-6 py-3">Сумма</th>
+                                        <th scope="col" class="px-6 py-3">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="income-entries">
+                                    <!-- Записи будут добавлены здесь -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок расходов -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Расходы</h2>
+                    <form id="expense-form" class="space-y-4">
+                        <div>
+                            <label for="expense-type" class="block text-sm font-medium text-gray-600">Категория расхода</label>
+                            <select id="expense-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                                <option value="food">Еда</option>
+                                <option value="transport">Транспорт</option>
+                                <option value="housing">Жилье</option>
+                                <option value="entertainment">Развлечения</option>
+                                <option value="utilities">Коммунальные услуги</option>
+                                <option value="health">Здоровье</option>
+                                <option value="education">Образование</option>
+                                <option value="other_expense">Другие расходы</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="expense-date" class="block text-sm font-medium text-gray-600">Дата</label>
+                            <input type="date" id="expense-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                        </div>
+                        <div>
+                            <label for="expense-amount" class="block text-sm font-medium text-gray-600">Сумма</label>
+                            <input type="number" id="expense-amount" placeholder="Напр. 500" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                        </div>
+                        <button type="submit" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">Добавить расход</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-gray-600">Записи расходов:</h3>
+                        <div id="expense-entries-container" class="table-container mt-2 border rounded-md">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">Дата</th>
+                                        <th scope="col" class="px-6 py-3">Тип</th>
+                                        <th scope="col" class="px-6 py-3">Сумма</th>
+                                        <th scope="col" class="px-6 py-3">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expense-entries">
+                                    <!-- Записи будут добавлены здесь -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка: Сводка, Диаграммы, Калькулятор, Настройки -->
+            <div class="space-y-6">
+                <!-- Сводка по месяцам -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Сводка по месяцам</h2>
+                    <div class="table-container">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Месяц</th>
+                                    <th scope="col" class="px-6 py-3">Доход</th>
+                                    <th scope="col" class="px-6 py-3">Расход</th>
+                                    <th scope="col" class="px-6 py-3">Баланс</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table">
+                                <!-- Сводка будет добавлена здесь -->
+                            </tbody>
+                            <tfoot class="border-t-2 border-gray-700">
+                                <tr>
+                                    <td class="font-bold text-gray-800 px-6 py-3 text-base">Общее:</td>
+                                    <td id="grand-income-total" class="font-bold text-gray-800 px-6 py-3 text-base">0</td>
+                                    <td id="grand-expense-total" class="font-bold text-gray-800 px-6 py-3 text-base">0</td>
+                                    <td id="grand-balance-total" class="font-bold text-gray-800 px-6 py-3 text-base">0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <button id="export-data-btn" class="mt-4 w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 ease-in-out">
+                        Экспорт данных (CSV)
+                    </button>
+                </div>
+
+                <!-- Диаграмма доходов по месяцам -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Доходы по месяцам</h2>
+                    <div class="w-full h-80 flex items-center justify-center">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Диаграмма расходов по категориям -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Расходы по категориям</h2>
+                    <div class="w-full h-80 flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Диаграмма Доходы vs Расходы -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Доходы vs Расходы</h2>
+                    <div class="w-full h-80 flex items-center justify-center">
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Калькулятор -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Калькулятор</h2>
+                    <div class="mb-4">
+                        <input type="text" id="calculator-display" class="w-full p-3 text-right text-2xl font-bold bg-gray-100 rounded-md border-gray-300 shadow-sm" value="0" readonly>
+                    </div>
+                    <div class="calculator-grid">
+                        <button class="clear" data-value="C">C</button>
+                        <button class="operator" data-value="/">/</button>
+                        <button class="operator" data-value="*">*</button>
+                        <button data-value="7">7</button>
+                        <button data-value="8">8</button>
+                        <button data-value="9">9</button>
+                        <button class="operator" data-value="-">-</button>
+                        <button data-value="4">4</button>
+                        <button data-value="5">5</button>
+                        <button data-value="6">6</button>
+                        <button class="operator" data-value="+">+</button>
+                        <button data-value="1">1</button>
+                        <button data-value="2">2</button>
+                        <button data-value="3">3</button>
+                        <button class="equals" data-value="=">=</button>
+                        <button data-value="0">0</button>
+                        <button data-value=".">.</button>
+                    </div>
+                </div>
+
+                <!-- Настройки: Выбор фона -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Настройки</h2>
+                    <div>
+                        <label for="background-select" class="block text-sm font-medium text-gray-600 mb-2">Выбор фонового изображения:</label>
+                        <select id="background-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="none">Без фона</option>
+                            <option value="bg-image-1">Светло-голубой</option>
+                            <option value="bg-image-2">Бирюзовый</option>
+                            <option value="bg-image-3">Бежевый</option>
+                            <option value="bg-image-4">Светло-серый</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для уведомлений -->
+    <div id="notification-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Уведомление</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="modal-message" class="text-sm text-gray-500"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="modal-close-btn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для подтверждения -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Подтверждение</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="confirmation-message" class="text-sm text-gray-500"></p>
+                </div>
+                <div class="items-center px-4 py-3 sm:flex sm:flex-row-reverse">
+                    <button id="confirm-yes-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Да
+                    </button>
+                    <button id="confirm-no-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                        Нет
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования -->
+    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Редактировать запись</h3>
+                <div class="mt-4 space-y-4 text-left">
+                    <div>
+                        <label for="edit-date" class="block text-sm font-medium text-gray-600">Дата</label>
+                        <input type="date" id="edit-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="edit-amount" class="block text-sm font-medium text-gray-600">Сумма</label>
+                        <input type="number" id="edit-amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div id="edit-type-container" class="hidden">
+                        <label for="edit-type" class="block text-sm font-medium text-gray-600">Тип/Категория</label>
+                        <select id="edit-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="items-center px-4 py-3 sm:flex sm:flex-row-reverse">
+                    <button id="save-edit-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Сохранить
+                    </button>
+                    <button id="cancel-edit-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                        Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Добавлено для отладки: подтверждение выполнения скрипта
+        console.log("Скрипт финансового трекера начал выполнение.");
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Убедитесь, что getDoc импортирован
+        import { getFirestore, collection, addDoc, onSnapshot, query, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase конфигурация ---
+        const defaultProjectId = typeof __app_id !== 'undefined' ? __app_id : 'default-project-id';
+        let firebaseConfig = {};
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch (e) {
+            console.error("Error parsing __firebase_config:", e);
+        }
+        // Ensure projectId is always set, even if parsing failed or it was missing
+        if (!firebaseConfig.projectId) {
+            firebaseConfig.projectId = defaultProjectId;
+        }
+        console.log("Firebase Config:", firebaseConfig); // Добавлено для отладки
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = null;
+        let incomeChart = null;
+        let expenseChart = null;
+        let incomeExpenseChart = null;
+        
+        const monthNames = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+        const incomeTypes = {
+            daily: "Ежедневный доход (Чаевые)",
+            advance: "Аванс",
+            salary: "Зарплата",
+            other_income: "Другой доход"
+        };
+        const expenseCategories = {
+            food: "Еда",
+            transport: "Транспорт",
+            housing: "Жилье",
+            entertainment: "Развлечения",
+            utilities: "Коммунальные услуги",
+            health: "Здоровье",
+            education: "Образование",
+            other_expense: "Другие расходы"
+        };
+
+        // --- Аутентификация ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('userId').textContent = userId;
+                await setupInitialDataIfNeeded();
+                setupListeners();
+                loadUserPreferences();
+            } else {
+                // Если пользователь вышел или не аутентифицирован, очищаем данные
+                document.getElementById('userId').textContent = 'Недоступно';
+                renderEntries([], 'income'); // Убедитесь, что передаете тип коллекции
+                renderEntries([], 'expense'); // Убедитесь, что передаете тип коллекции
+                updateSummaryAndCharts([], []);
+            }
+        });
+        
+        (async () => {
+             try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Ошибка аутентификации:", error);
+                showModal("Ошибка аутентификации. Пожалуйста, попробуйте позже.", "Ошибка");
+            }
+        })();
+        
+        // --- Функции для модальных окон ---
+        const notificationModal = document.getElementById('notification-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const closeModalBtn = document.getElementById('modal-close-btn');
+
+        function showModal(message, title = "Уведомление") {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            notificationModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            notificationModal.classList.add('hidden');
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        notificationModal.addEventListener('click', (event) => {
+            if (event.target == notificationModal) {
+                closeModal();
+            }
+        });
+
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmationMessage = document.getElementById('confirmation-message');
+        const confirmYesBtn = document.getElementById('confirm-yes-btn');
+        const confirmNoBtn = document.getElementById('confirm-no-btn');
+        let confirmAction = null; // Функция, которая будет вызвана при подтверждении
+
+        function showConfirmationModal(message, onConfirm) {
+            confirmationMessage.textContent = message;
+            confirmAction = onConfirm;
+            confirmationModal.classList.remove('hidden');
+        }
+
+        confirmYesBtn.addEventListener('click', () => {
+            if (confirmAction) {
+                confirmAction();
+            }
+            confirmationModal.classList.add('hidden');
+            confirmAction = null;
+        });
+
+        confirmNoBtn.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+            confirmAction = null;
+        });
+
+        confirmationModal.addEventListener('click', (event) => {
+            if (event.target == confirmationModal) {
+                confirmationModal.classList.add('hidden');
+                confirmAction = null;
+            }
+        });
+
+        const editModal = document.getElementById('edit-modal');
+        const editDateInput = document.getElementById('edit-date');
+        const editAmountInput = document.getElementById('edit-amount');
+        const editTypeContainer = document.getElementById('edit-type-container');
+        const editTypeSelect = document.getElementById('edit-type');
+        const saveEditBtn = document.getElementById('save-edit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        let currentEditEntry = null;
+        let currentEditCollection = null;
+
+        function showEditModal(entry, collectionType) {
+            currentEditEntry = entry;
+            currentEditCollection = collectionType;
+            editDateInput.value = entry.date;
+            editAmountInput.value = entry.amount;
+
+            // Очищаем и заполняем select для типа/категории
+            editTypeSelect.innerHTML = '';
+            if (collectionType === 'income') {
+                editTypeContainer.classList.remove('hidden');
+                for (const key in incomeTypes) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = incomeTypes[key];
+                    editTypeSelect.appendChild(option);
+                }
+            } else if (collectionType === 'expense') {
+                editTypeContainer.classList.remove('hidden');
+                for (const key in expenseCategories) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = expenseCategories[key];
+                    editTypeSelect.appendChild(option);
+                }
+            } else {
+                editTypeContainer.classList.add('hidden'); // Скрываем, если нет типов (например, для будущих типов данных)
+            }
+            editTypeSelect.value = entry.type; // Устанавливаем текущее значение
+
+            editModal.classList.remove('hidden');
+        }
+
+        saveEditBtn.addEventListener('click', async () => {
+            if (!currentEditEntry || !currentEditCollection) return;
+
+            const newDate = editDateInput.value;
+            const newAmount = Number(editAmountInput.value);
+            const newType = editTypeSelect.value;
+
+            if (!newDate || isNaN(newAmount) || newAmount <= 0) {
+                showModal("Пожалуйста, введите корректную дату и сумму для редактирования.", "Ошибка ввода");
+                return;
+            }
+
+            try {
+                const collectionPath = `artifacts/${appId}/users/${userId}/finance_${currentEditCollection}s`;
+                const docRef = doc(db, collectionPath, currentEditEntry.id);
+                await updateDoc(docRef, {
+                    date: newDate,
+                    amount: newAmount,
+                    type: newType // Обновляем тип/категорию
+                });
+                showModal("Запись успешно обновлена!", "Успех");
+                editModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Ошибка обновления записи: ", error);
+                showModal("Не удалось обновить запись. Пожалуйста, попробуйте снова.", "Ошибка");
+            }
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editModal.classList.add('hidden');
+            currentEditEntry = null;
+            currentEditCollection = null;
+        });
+
+        editModal.addEventListener('click', (event) => {
+            if (event.target == editModal) {
+                editModal.classList.add('hidden');
+                currentEditEntry = null;
+                currentEditCollection = null;
+            }
+        });
+
+
+        // --- Инициализация данных (только один раз для нового пользователя) ---
+        async function setupInitialDataIfNeeded() {
+            const incomeQuery = query(collection(db, `artifacts/${appId}/users/${userId}/finance_incomes`));
+            const expenseQuery = query(collection(db, `artifacts/${appId}/users/${userId}/finance_expenses`));
+            
+            const incomeSnapshot = await getDocs(incomeQuery);
+            const expenseSnapshot = await getDocs(expenseQuery);
+
+            if (incomeSnapshot.empty && expenseSnapshot.empty) {
+                 const initialIncomes = [
+                    { date: '2025-06-30', amount: 4435, type: 'daily' },
+                    { date: '2025-07-01', amount: 3094, type: 'daily' },
+                    { date: '2025-07-02', amount: 5179, type: 'daily' },
+                    { date: '2025-07-15', amount: 1350, type: 'daily' },
+                    { date: '2025-07-16', amount: 500, type: 'daily' },
+                    { date: '2025-07-17', amount: 250, type: 'daily' },
+                    { date: '2025-07-19', amount: 200, type: 'daily' },
+                    { date: '2025-07-20', amount: 210, type: 'daily' },
+                    { date: '2025-07-19', amount: 3000, type: 'advance' },
+                    { date: '2025-07-25', amount: 50000, type: 'salary' },
+                    { date: '2025-06-10', amount: 1000, type: 'other_income' },
+                ];
+
+                const initialExpenses = [
+                    { date: '2025-07-01', amount: 300, type: 'food' },
+                    { date: '2025-07-03', amount: 150, type: 'transport' },
+                    { date: '2025-07-05', amount: 1200, type: 'housing' },
+                    { date: '2025-07-10', amount: 500, type: 'entertainment' },
+                    { date: '2025-07-15', amount: 200, type: 'food' },
+                    { date: '2025-07-18', amount: 80, type: 'transport' },
+                    { date: '2025-07-22', amount: 1500, type: 'utilities' },
+                    { date: '2025-06-20', amount: 400, type: 'food' },
+                ];
+
+                const incomeCollection = collection(db, `artifacts/${appId}/users/${userId}/finance_incomes`);
+                for (const entry of initialIncomes) {
+                    await addDoc(incomeCollection, entry);
+                }
+
+                const expenseCollection = collection(db, `artifacts/${appId}/users/${userId}/finance_expenses`);
+                for (const entry of initialExpenses) {
+                    await addDoc(expenseCollection, entry);
+                }
+                showModal("Примерные данные добавлены для начала работы!", "Добро пожаловать!");
+            }
+        }
+
+
+        // --- Обработчики событий форм ---
+        document.getElementById('income-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            addEntry('income');
+        });
+
+        document.getElementById('expense-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            addEntry('expense');
+        });
+
+        async function addEntry(collectionType) {
+            if (!userId) {
+                showModal("Пользователь не аутентифицирован. Пожалуйста, подождите или обновите страницу.", "Ошибка");
+                return;
+            }
+            const dateInput = document.getElementById(`${collectionType}-date`);
+            const amountInput = document.getElementById(`${collectionType}-amount`);
+            const typeSelect = document.getElementById(`${collectionType}-type`);
+            
+            const entry = {
+                date: dateInput.value,
+                amount: Number(amountInput.value),
+                type: typeSelect.value
+            };
+
+            if (!entry.date || isNaN(entry.amount) || entry.amount <= 0) {
+                showModal("Пожалуйста, введите корректную дату и сумму (больше нуля).", "Ошибка ввода");
+                return;
+            }
+
+            try {
+                const entriesCollection = collection(db, `artifacts/${appId}/users/${userId}/finance_${collectionType}s`);
+                await addDoc(entriesCollection, entry);
+                dateInput.value = '';
+                amountInput.value = '';
+                showModal(`Запись о ${collectionType === 'income' ? 'доходе' : 'расходе'} успешно добавлена!`, "Успех");
+            } catch (error) {
+                console.error(`Ошибка добавления записи ${collectionType}: `, error);
+                showModal(`Не удалось добавить запись о ${collectionType === 'income' ? 'доходе' : 'расходе'}. Пожалуйста, попробуйте снова.`, "Ошибка");
+            }
+        }
+
+        // --- Прослушиватель изменений в Firestore ---
+        function setupListeners() {
+            if (!userId) return;
+
+            const incomeCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/finance_incomes`);
+            const expenseCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/finance_expenses`);
+
+            let currentIncomes = [];
+            let currentExpenses = [];
+
+            // Слушатель для доходов
+            onSnapshot(query(incomeCollectionRef), (snapshot) => {
+                currentIncomes = []; // Очищаем перед заполнением
+                snapshot.forEach((doc) => {
+                    currentIncomes.push({ id: doc.id, ...doc.data() });
+                });
+                currentIncomes.sort((a, b) => new Date(a.date) - new Date(b.date));
+                renderEntries(currentIncomes, 'income');
+                updateSummaryAndCharts(currentIncomes, currentExpenses);
+            }, (error) => {
+                console.error("Ошибка при получении доходов: ", error);
+                showModal("Не удалось загрузить доходы. Пожалуйста, проверьте ваше соединение.", "Ошибка");
+            });
+
+            // Слушатель для расходов
+            onSnapshot(query(expenseCollectionRef), (snapshot) => {
+                currentExpenses = []; // Очищаем перед заполнением
+                snapshot.forEach((doc) => {
+                    currentExpenses.push({ id: doc.id, ...doc.data() });
+                });
+                currentExpenses.sort((a, b) => new Date(a.date) - new Date(b.date));
+                renderEntries(currentExpenses, 'expense');
+                updateSummaryAndCharts(currentIncomes, currentExpenses);
+            }, (error) => {
+                console.error("Ошибка при получении расходов: ", error);
+                showModal("Не удалось загрузить расходы. Пожалуйста, проверьте ваше соединение.", "Ошибка");
+            });
+        }
+
+        // --- Рендеринг данных в таблицах ---
+        function renderEntries(entries, collectionType) {
+            const tbody = document.getElementById(`${collectionType}-entries`);
+            // Добавлена проверка на null
+            if (!tbody) {
+                console.error(`Элемент с ID '${collectionType}-entries' не найден. DOM, возможно, еще не загружен.`);
+                return; 
+            }
+            tbody.innerHTML = '';
+
+            entries.forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white border-b';
+                
+                const typeDisplayName = collectionType === 'income' ? incomeTypes[entry.type] : expenseCategories[entry.type];
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4">${new Date(entry.date).toLocaleDateString('ru-RU')}</td>
+                    <td class="px-6 py-4">${typeDisplayName || entry.type}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${entry.amount.toLocaleString('ru-RU')}</td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3 edit-btn" data-id="${entry.id}" data-type="${collectionType}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-1.75 2.132l-4.96 4.96a1 1 0 00-.293.707v4.586a1 1 0 001 1h4.586a1 1 0 00.707-.293l4.96-4.96-2.828-2.828-4.96 4.96z" />
+                            </svg>
+                        </button>
+                        <button class="text-red-600 hover:text-red-900 delete-btn" data-id="${entry.id}" data-type="${collectionType}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Добавляем слушатели для кнопок редактирования и удаления
+            tbody.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const type = e.currentTarget.dataset.type;
+                    const entryToEdit = entries.find(entry => entry.id === id);
+                    if (entryToEdit) {
+                        showEditModal(entryToEdit, type);
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const type = e.currentTarget.dataset.type;
+                    showConfirmationModal("Вы уверены, что хотите удалить эту запись?", async () => {
+                        await deleteEntry(id, type);
+                    });
+                });
+            });
+        }
+
+        async function deleteEntry(id, collectionType) {
+            try {
+                const collectionPath = `artifacts/${appId}/users/${userId}/finance_${collectionType}s`;
+                await deleteDoc(doc(db, collectionPath, id));
+                showModal("Запись успешно удалена!", "Успех");
+            } catch (error) {
+                console.error("Ошибка удаления записи: ", error);
+                showModal("Не удалось удалить запись. Пожалуйста, попробуйте снова.", "Ошибка");
+            }
+        }
+
+
+        // --- Обновление сводки и диаграмм ---
+        function updateSummaryAndCharts(allIncomes, allExpenses) {
+            const monthlyIncomeTotals = {};
+            const monthlyExpenseTotals = {};
+            let grandIncomeTotal = 0;
+            let grandExpenseTotal = 0;
+
+            allIncomes.forEach(entry => {
+                const date = new Date(entry.date);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const key = `${monthNames[month]}.${String(year).slice(-2)}`;
+
+                if (!monthlyIncomeTotals[key]) {
+                    monthlyIncomeTotals[key] = 0;
+                }
+                monthlyIncomeTotals[key] += entry.amount;
+                grandIncomeTotal += entry.amount;
+            });
+
+            allExpenses.forEach(entry => {
+                const date = new Date(entry.date);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const key = `${monthNames[month]}.${String(year).slice(-2)}`;
+
+                if (!monthlyExpenseTotals[key]) {
+                    monthlyExpenseTotals[key] = 0;
+                }
+                monthlyExpenseTotals[key] += entry.amount;
+                grandExpenseTotal += entry.amount;
+            });
+            
+            // Добавляем месяцы без дохода/расхода для полноты картины
+            const currentYear = new Date().getFullYear();
+            const currentYearShort = String(currentYear).slice(-2);
+            const allMonthKeys = new Set();
+            for(let i=0; i<12; i++) {
+                allMonthKeys.add(`${monthNames[i]}.${currentYearShort}`);
+            }
+            Object.keys(monthlyIncomeTotals).forEach(key => allMonthKeys.add(key));
+            Object.keys(monthlyExpenseTotals).forEach(key => allMonthKeys.add(key));
+
+
+            const sortedMonths = Array.from(allMonthKeys).sort((a, b) => {
+                const [monthA, yearA] = a.split('.');
+                const [monthB, yearB] = b.split('.');
+                const fullYearA = parseInt(`20${yearA}`);
+                const fullYearB = parseInt(`20${yearB}`);
+
+                if (fullYearA !== fullYearB) return fullYearA - fullYearB;
+                return monthNames.indexOf(monthA) - monthNames.indexOf(monthB);
+            });
+
+            // Обновление таблицы сводки
+            const summaryTable = document.getElementById('summary-table');
+            summaryTable.innerHTML = '';
+            sortedMonths.forEach(key => {
+                const income = monthlyIncomeTotals[key] || 0;
+                const expense = monthlyExpenseTotals[key] || 0;
+                const balance = income - expense;
+                const isPositive = balance > 0;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-2">${key}</td>
+                    <td class="px-6 py-2 font-medium text-gray-900">${income.toLocaleString('ru-RU')}</td>
+                    <td class="px-6 py-2 font-medium text-gray-900">${expense.toLocaleString('ru-RU')}</td>
+                    <td class="px-6 py-2 font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}">${balance.toLocaleString('ru-RU')}</td>
+                `;
+                summaryTable.appendChild(tr);
+            });
+
+            document.getElementById('grand-income-total').textContent = grandIncomeTotal.toLocaleString('ru-RU');
+            document.getElementById('grand-expense-total').textContent = grandExpenseTotal.toLocaleString('ru-RU');
+            document.getElementById('grand-balance-total').textContent = (grandIncomeTotal - grandExpenseTotal).toLocaleString('ru-RU');
+
+
+            // --- Обновление диаграммы доходов по месяцам ---
+            const incomeChartLabels = sortedMonths;
+            const incomeChartData = sortedMonths.map(key => monthlyIncomeTotals[key] || 0);
+            const incomeChartColors = generateColors(incomeChartLabels.length);
+            
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            if (incomeChart) {
+                incomeChart.destroy();
+            }
+            incomeChart = new Chart(incomeCtx, {
+                type: 'pie',
+                data: {
+                    labels: incomeChartLabels,
+                    datasets: [{
+                        label: 'Доход',
+                        data: incomeChartData,
+                        backgroundColor: incomeChartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                boxWidth: 12,
+                                color: getComputedStyle(document.body).color // Адаптация цвета легенды
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- Обновление диаграммы расходов по категориям ---
+            const expenseCategoryTotals = {};
+            allExpenses.forEach(entry => {
+                if (!expenseCategoryTotals[entry.type]) {
+                    expenseCategoryTotals[entry.type] = 0;
+                }
+                expenseCategoryTotals[entry.type] += entry.amount;
+            });
+
+            const expenseChartLabels = Object.keys(expenseCategoryTotals).map(key => expenseCategories[key] || key);
+            const expenseChartData = Object.values(expenseCategoryTotals);
+            const expenseChartColors = generateColors(expenseChartLabels.length);
+
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            if (expenseChart) {
+                expenseChart.destroy();
+            }
+            expenseChart = new Chart(expenseCtx, {
+                type: 'pie',
+                data: {
+                    labels: expenseChartLabels,
+                    datasets: [{
+                        label: 'Расходы по категориям',
+                        data: expenseChartData,
+                        backgroundColor: expenseChartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                boxWidth: 12,
+                                color: getComputedStyle(document.body).color // Адаптация цвета легенды
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- Обновление диаграммы Доходы vs Расходы ---
+            const incomeExpenseChartCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+            if (incomeExpenseChart) {
+                incomeExpenseChart.destroy();
+            }
+            incomeExpenseChart = new Chart(incomeExpenseChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        {
+                            label: 'Доходы',
+                            data: sortedMonths.map(key => monthlyIncomeTotals[key] || 0),
+                            backgroundColor: '#3b82f6', // Синий
+                            borderColor: '#3b82f6',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Расходы',
+                            data: sortedMonths.map(key => monthlyExpenseTotals[key] || 0),
+                            backgroundColor: '#ef4444', // Красный
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: getComputedStyle(document.body).color // Адаптация цвета текста оси
+                            },
+                            grid: {
+                                color: 'rgba(100, 100, 100, 0.2)' // Адаптация цвета сетки
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: getComputedStyle(document.body).color // Адаптация цвета текста оси
+                            },
+                            grid: {
+                                color: 'rgba(100, 100, 100, 0.2)' // Адаптация цвета сетки
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: getComputedStyle(document.body).color // Адаптация цвета легенды
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Расширенная функция генерации цветов
+        function generateColors(numColors) {
+            const baseColors = [
+                '#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6', '#ec4899',
+                '#14b8a6', '#f59e0b', '#6366f1', '#d946ef', '#0ea5e9', '#eab308',
+                '#6d28d9', '#be123c', '#059669', '#ca8a04', '#7c3aed', '#db2777',
+                '#0f766e', '#fbbf24', '#4338ca', '#c026d3', '#0284c7', '#facc15'
+            ];
+            const colors = [];
+            for (let i = 0; i < numColors; i++) {
+                colors.push(baseColors[i % baseColors.length]);
+            }
+            return colors;
+        }
+
+        // --- Функционал калькулятора ---
+        const calculatorDisplay = document.getElementById('calculator-display');
+        const calculatorButtons = document.querySelector('.calculator-grid');
+        let currentInput = '0';
+        let operator = null;
+        let previousInput = '0';
+        let resetDisplay = false;
+
+        function updateDisplay() {
+            calculatorDisplay.value = currentInput;
+        }
+
+        calculatorButtons.addEventListener('click', (e) => {
+            const target = e.target;
+            if (!target.matches('button')) return;
+
+            const value = target.dataset.value;
+
+            if (value === 'C') {
+                currentInput = '0';
+                operator = null;
+                previousInput = '0';
+                resetDisplay = false;
+            } else if (value === '=') {
+                if (operator && !resetDisplay) {
+                    currentInput = String(evaluate(previousInput, currentInput, operator));
+                    operator = null;
+                    resetDisplay = true;
+                }
+            } else if (['+', '-', '*', '/'].includes(value)) {
+                if (operator && !resetDisplay) {
+                    previousInput = String(evaluate(previousInput, currentInput, operator));
+                } else {
+                    previousInput = currentInput;
+                }
+                operator = value;
+                resetDisplay = true;
+            } else { // Numbers and decimal
+                if (resetDisplay) {
+                    currentInput = value;
+                    resetDisplay = false;
+                } else {
+                    if (currentInput === '0' && value !== '.') {
+                        currentInput = value;
+                    } else if (value === '.' && currentInput.includes('.')) {
+                        // Do nothing if decimal already exists
+                    } else {
+                        currentInput += value;
+                    }
+                }
+            }
+            updateDisplay();
+        });
+
+        function evaluate(a, b, op) {
+            a = parseFloat(a);
+            b = parseFloat(b);
+            if (isNaN(a) || isNaN(b)) return NaN; // Handle invalid numbers
+
+            switch (op) {
+                case '+': return a + b;
+                case '-': return a - b;
+                case '*': return a * b;
+                case '/': 
+                    if (b === 0) {
+                        showModal("Деление на ноль невозможно!", "Ошибка");
+                        return 0; // Or handle as an error state
+                    }
+                    return a / b;
+                default: return b;
+            }
+        }
+
+        // --- Функционал темного режима ---
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        darkModeToggle.addEventListener('change', () => {
+            if (darkModeToggle.checked) {
+                document.body.classList.add('dark');
+                saveUserPreference('darkMode', true);
+            } else {
+                document.body.classList.remove('dark');
+                saveUserPreference('darkMode', false);
+            }
+            // Перерисовать диаграммы для адаптации цветов текста/легенды
+            // Это будет сделано автоматически при следующем вызове updateSummaryAndCharts
+            // Но для мгновенного эффекта можно вызвать их принудительно, если данные уже загружены
+            if (incomeChart) incomeChart.update();
+            if (expenseChart) expenseChart.update();
+            if (incomeExpenseChart) incomeExpenseChart.update();
+        });
+
+        // --- Функционал выбора фона ---
+        const backgroundSelect = document.getElementById('background-select');
+
+        backgroundSelect.addEventListener('change', () => {
+            const selectedBackground = backgroundSelect.value;
+            // Удаляем все предыдущие классы bg-image-X
+            document.body.classList.remove('bg-image-1', 'bg-image-2', 'bg-image-3', 'bg-image-4');
+            if (selectedBackground !== 'none') {
+                document.body.classList.add(selectedBackground);
+            }
+            saveUserPreference('background', selectedBackground);
+        });
+
+        // --- Сохранение и загрузка пользовательских настроек (темный режим, фон) ---
+        async function saveUserPreference(key, value) {
+            if (!userId) return;
+            try {
+                const userPrefsRef = doc(db, `artifacts/${appId}/users/${userId}/user_preferences/settings`);
+                await updateDoc(userPrefsRef, { [key]: value }, { merge: true });
+            } catch (error) {
+                // Если документ не существует, создаем его
+                if (error.code === 'not-found') {
+                    const userPrefsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/user_preferences`);
+                    // Используем setDoc вместо addDoc для создания документа с известным ID 'settings'
+                    await setDoc(userPrefsRef, { [key]: value }); 
+                } else {
+                    console.error("Ошибка сохранения настроек пользователя:", error);
+                }
+            }
+        }
+
+        async function loadUserPreferences() {
+            if (!userId) return;
+            try {
+                const userPrefsRef = doc(db, `artifacts/${appId}/users/${userId}/user_preferences/settings`);
+                const docSnap = await getDoc(userPrefsRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.darkMode !== undefined) {
+                        darkModeToggle.checked = data.darkMode;
+                        if (data.darkMode) {
+                            document.body.classList.add('dark');
+                        } else {
+                            document.body.classList.remove('dark');
+                        }
+                    }
+                    if (data.background !== undefined) {
+                        document.body.classList.remove('bg-image-1', 'bg-image-2', 'bg-image-3', 'bg-image-4');
+                        if (data.background !== 'none') {
+                            document.body.classList.add(data.background);
+                        }
+                        backgroundSelect.value = data.background;
+                    }
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки настроек пользователя:", error);
+            }
+        }
+
+        // --- Экспорт данных в CSV ---
+        document.getElementById('export-data-btn').addEventListener('click', async () => {
+            if (!userId) {
+                showModal("Пользователь не аутентифицирован. Невозможно экспортировать данные.", "Ошибка");
+                return;
+            }
+
+            try {
+                const incomeSnapshot = await getDocs(collection(db, `artifacts/${appId}/users/${userId}/finance_incomes`));
+                const expenseSnapshot = await getDocs(collection(db, `artifacts/${appId}/users/${userId}/finance_expenses`));
+
+                let csvContent = "Тип,Дата,Сумма,Категория/Подтип\n"; // Заголовок CSV
+
+                incomeSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    csvContent += `Доход,${data.date},${data.amount},${incomeTypes[data.type] || data.type}\n`;
+                });
+
+                expenseSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    csvContent += `Расход,${data.date},${data.amount},${expenseCategories[data.type] || data.type}\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                if (link.download !== undefined) { // Проверка поддержки download
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'financial_data.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showModal("Данные успешно экспортированы в financial_data.csv!", "Экспорт завершен");
+                } else {
+                    showModal("Ваш браузер не поддерживает автоматическую загрузку CSV. Пожалуйста, скопируйте данные вручную.", "Ошибка экспорта");
+                    console.log(csvContent); // Выводим в консоль для ручного копирования
+                }
+            } catch (error) {
+                console.error("Ошибка экспорта данных:", error);
+                showModal("Не удалось экспортировать данные. Пожалуйста, попробуйте снова.", "Ошибка");
+            }
+        });
+
+    </script>
+</body>
+</html>
